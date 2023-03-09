@@ -8,10 +8,12 @@ from django.test import TestCase
 
 
 class ModelTest(TestCase):
+    manager = get_user_model().objects
+
     def test_create_user_with_email_succesfully(self):
         email = "test@example.com"
         password = "testpassword1234"
-        user = get_user_model().objects.create_user(email=email, password=password)
+        user = self.manager.create_user(email=email, password=password)
 
         self.assertEqual(email, user.email)
         self.assertTrue(user.check_password(password))
@@ -33,10 +35,10 @@ class ModelTest(TestCase):
 
     def test_user_without_email_raises_value_exception(self):
         with self.assertRaises(ValueError):
-            get_user_model().objects.create_user(email="", password="sample")
+            self.manager.create_user(email="", password="sample")
 
     def test_create_superuser(self):
-        user = get_user_model().objects.create_superuser(
+        user = self.manager.create_superuser(
             email="test@example.com", password="samplepassword"
         )
 
