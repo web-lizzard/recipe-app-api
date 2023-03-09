@@ -1,3 +1,5 @@
 {
-    "reportMissingModuleSource": false
+    "reportMissingModuleSource": false,
+    "reportGeneralTypeIssues": false
+    
 }
