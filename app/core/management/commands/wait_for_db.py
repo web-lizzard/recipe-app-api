@@ -11,7 +11,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         self.stdout.write("Waiting for database...")
         try:
-            self.check(databases=["default"])
+            self.check(databases=["default"])  # type: ignore
         except (OperationalError, Psycopg2Error):
             time.sleep(1)
             self.handle()
