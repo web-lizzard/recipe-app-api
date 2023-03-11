@@ -6,6 +6,7 @@ from rest_framework import status
 from rest_framework.test import APIClient
 
 CREATE_USER_URL = reverse("user:create")
+TOKEN_URL = reverse("user:token")
 
 
 def create_user(**user_data) -> User:
@@ -16,7 +17,7 @@ class TestPublicUserEndpoints(TestCase):
     def setUp(self) -> None:
         self.client = APIClient()
 
-    def test_user_create_succesfully(self):
+    def test_user_create_successfully(self):
         """Test if user is created succesfully"""
 
         payload = {
@@ -59,3 +60,52 @@ class TestPublicUserEndpoints(TestCase):
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertFalse(is_user_exist)
+
+    def test_create_token_for_user(self):
+        """It should return token when credentials are ok"""
+
+        user_data = {
+            "name": "Test Name",
+            "password": "testpassword",
+            "email": "test@example.com",
+        }
+
+        token_request_payload = {
+            "email": user_data["email"],
+            "password": user_data["password"],
+        }
+
+        create_user(**user_data)
+        response = self.client.post(TOKEN_URL, token_request_payload)
+
+        self.assertIn(member="token", container=response.data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_create_token_bad_credentials(self):
+        """It should return an error instead of token when credentials are bad"""
+
+        payload = {
+            "email": "test2@example.com",
+            "password": "12344",
+        }
+
+        response = self.client.post(TOKEN_URL, payload)
+
+        self.assertNotIn(member="token", container=response.data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_create_token_empty_password(self):
+        """It should return an error instead of token when password is empty"""
+
+        user_data = {
+            "name": "test data",
+            "password": "password",
+            "email": "test@example.com",
+        }
+        token_request_payload = {"email": user_data["email"], "password": ""}
+
+        create_user(**user_data)
+        response = self.client.post(TOKEN_URL, token_request_payload)
+
+        self.assertNotIn(member="token", container=response.data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
