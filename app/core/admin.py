@@ -1,11 +1,12 @@
 from core import models
-from django.contrib import admin  # noqa
+from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.utils.translation import gettext_lazy as translate
 
 
-# Register your models here.
 class UserAdmin(BaseUserAdmin):
+    """Class to customize admin panel for user entities"""
+
     ordering = ["email"]
     list_display = ["email", "name", "id"]
     fieldsets = (
@@ -38,3 +39,4 @@ class UserAdmin(BaseUserAdmin):
 
 
 admin.site.register(models.User, UserAdmin)
+admin.site.register(models.Recipe)

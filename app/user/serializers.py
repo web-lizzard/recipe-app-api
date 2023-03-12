@@ -3,7 +3,9 @@ from django.utils.translation import gettext_lazy as translate
 from rest_framework import serializers
 
 
-class CreateUserSerializer(serializers.ModelSerializer):
+class UserSerializer(serializers.ModelSerializer):
+    """Serializer for user data"""
+
     class Meta:
         model = get_user_model()
         fields = ["email", "name", "password"]
