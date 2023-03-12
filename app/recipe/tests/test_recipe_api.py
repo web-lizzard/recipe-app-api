@@ -10,11 +10,11 @@ from recipe.serializers import RecipeDetailsSerializer, RecipeSerializer
 from rest_framework import status
 from rest_framework.test import APIClient
 
-RECIPES_URL = reverse("recipe:recipe-list")
+RECIPES_URL = reverse("recipes:recipe-list")
 
 
 def get_detail_url(recipe_id: str):
-    return reverse("recipe:recipe-detail", args=[recipe_id])
+    return reverse("recipes:recipe-detail", args=[recipe_id])
 
 
 def create_recipe(user: User, **params):
