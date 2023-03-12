@@ -2,7 +2,7 @@
 
 from decimal import Decimal
 
-from core.models import Recipe, User
+from core.models import Recipe, Tag, User
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
@@ -130,6 +130,8 @@ class PrivateRecipeAPITests(TestCase):
         self.assertEqual(recipe.user, self.user)
 
     def test_full_update(self):
+        """Test PUT recipe update"""
+
         recipe = create_recipe(
             user=self.user,
             title="Recipe Title",
@@ -179,3 +181,41 @@ class PrivateRecipeAPITests(TestCase):
 
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertFalse(Recipe.objects.filter(id=recipe.id).exists())
+
+    def test_create_recipe_with_tags(self):
+        """Create recipe with a tags"""
+
+        payload = {
+            "title": "Thai Prawn Curry",
+            "time_minutes": 30,
+            "price": Decimal("4.2"),
+            "tags": [{"name": "Thai"}, {"name": "Dinner"}],
+        }
+        response = self.client.post(RECIPES_URL, payload, format="json")
+        recipe = Recipe.objects.get(title=payload["title"])
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertIsNotNone(recipe)
+        self.assertEqual(recipe.tags.count(), 2)
+        for tag in payload["tags"]:
+            is_exists = recipe.tags.filter(user=self.user, name=tag["name"]).exists()
+
+            self.assertTrue(is_exists)
+
+    def test_create_recipe_with_already_existing_tag(self):
+        Tag.objects.create(name="Greek", user=self.user)
+        payload = {
+            "title": "Salad",
+            "time_minutes": 30,
+            "price": Decimal("4.2"),
+            "tags": [{"name": "Greek"}],
+        }
+        response = self.client.post(RECIPES_URL, payload, format="json")
+
+        recipe = Recipe.objects.get(title=payload["title"])
+        tag = Tag.objects.filter(name="Greek")
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertIsNotNone(recipe)
+        self.assertEqual(recipe.tags.count(), 1)
+        self.assertEqual(len(tag), 1)
