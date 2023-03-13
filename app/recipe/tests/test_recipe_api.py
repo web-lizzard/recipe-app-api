@@ -203,6 +203,8 @@ class PrivateRecipeAPITests(TestCase):
             self.assertTrue(is_exists)
 
     def test_create_recipe_with_already_existing_tag(self):
+        """Test if adding tags to recipe that exists, don't create a duplicate"""
+
         Tag.objects.create(name="Greek", user=self.user)
         payload = {
             "title": "Salad",
@@ -219,3 +221,58 @@ class PrivateRecipeAPITests(TestCase):
         self.assertIsNotNone(recipe)
         self.assertEqual(recipe.tags.count(), 1)
         self.assertEqual(len(tag), 1)
+
+    def test_update_recipe_with_new_tags(self):
+        """Test updating recipe with new tag"""
+
+        recipe = create_recipe(
+            self.user, title="Sushi", price=Decimal("2.2"), time_minutes=3
+        )
+        payload = {"tags": [{"name": "japanese"}]}
+
+        response = self.client.patch(get_detail_url(recipe.id), payload, format="json")
+        recipe.refresh_from_db()
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(recipe.tags.count(), 1)
+
+        for tag in payload["tags"]:
+            is_exists = recipe.tags.filter(user=self.user, name=tag["name"]).exists()
+
+            self.assertTrue(is_exists)
+
+    def test_update_recipe_with_existing_tags(self):
+        """Test updating recipe when an existing tag"""
+
+        Tag.objects.create(name="some tag name", user=self.user)
+        recipe = create_recipe(
+            self.user, title="Some recipe title", price=Decimal("2.2"), time_minutes=3
+        )
+
+        payload = {"tags": [{"name": "some tag name"}]}
+        response = self.client.patch(get_detail_url(recipe.id), payload, format="json")
+        recipe.refresh_from_db()
+        tags = Tag.objects.filter(name="some tag name")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(tags.count(), 1)
+
+        for tag in payload["tags"]:
+            is_exists = recipe.tags.filter(user=self.user, name=tag["name"]).exists()
+
+            self.assertTrue(is_exists)
+
+    def test_update_clearing_recipe_tags(self):
+        """Test if patch new tags to recipe clear previous tags"""
+
+        recipe = create_recipe(
+            self.user, title="Breakfast", price=Decimal("2.2"), time_minutes=3
+        )
+        payload = {"tags": [{"name": "Dinner"}]}
+
+        response = self.client.patch(get_detail_url(recipe.id), payload, format="json")
+        recipe.refresh_from_db()
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertFalse(recipe.tags.filter(name="Breakfast").exists())
+        self.assertTrue(recipe.tags.filter(name="Dinner").exists())
